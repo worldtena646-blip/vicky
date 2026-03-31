@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 智能营养师</title>
+  <link rel="icon" href="data:," />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* 医疗级绿色调色板 - 柔和专业 */
+      --mint-50: #f0fdf4;
+      --mint-100: #dcfce7;
+      --mint-200: #bbf7d0;
+      --mint-300: #86efac;
+      --mint-400: #4ade80;
+      --mint-500: #22c55e;
+      --mint-600: #16a34a;
+      --mint-700: #15803d;
+      --mint-800: #166534;
+      --mint-900: #14532d;
+
+      --teal-50: #f0fdfa;
+      --teal-100: #ccfbf1;
+      --teal-200: #99f6e4;
+      --teal-300: #5eead4;
+      --teal-400: #2dd4bf;
+      --teal-500: #14b8a6;
+      --teal-600: #0d9488;
+      --teal-700: #0f766e;
+      --teal-800: #115e59;
+      --teal-900: #134e4a;
+
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
+
+      /* 功能色 */
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --info: #3b82f6;
+
+      /* 主题变量 */
+      --bg-primary: var(--slate-50);
+      --bg-secondary: white;
+      --bg-tertiary: var(--slate-100);
+      --text-primary: var(--slate-900);
+      --text-secondary: var(--slate-600);
+      --text-tertiary: var(--slate-400);
+      --border: var(--slate-200);
+      --accent: var(--teal-600);
+      --accent-light: var(--teal-100);
+      --accent-dark: var(--teal-700);
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+      --radius-sm: 6px;
+      --radius: 10px;
+      --radius-md: 14px;
+      --radius-lg: 18px;
+      --radius-xl: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Noto Sans SC', 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* 顶部导航 */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--teal-500) 0%, var(--mint-500) 100%);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: var(--shadow-md);
+      animation: pulse-soft 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse-soft {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .brand-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: var(--mint-100);
+      color: var(--mint-800);
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 999px;
+      border: 1px solid var(--mint-200);
+    }
+
+    .badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: blink 2s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .status-text {
+      font-size: 13px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+    }
+
+    /* 主内容区 */
+    .main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* AI 对话区域 */
+    .chat-section {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      animation: slide-up 0.6s ease-out;
+    }
+
+    @keyframes slide-up {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: linear-gradient(90deg, var(--teal-50) 0%, var(--mint-50) 100%);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .chat-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--teal-800);
+    }
+
+    .chat-title-icon {
+      width: 28px;
+      height: 28px;
+      background: white;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .chat-frame-wrap {
+      position: relative;
+      background: white;
+    }
+
+    .chat-frame {
+      width: 100%;
+      height: 640px;
+      border: 0;
+      display: block;
+    }
+
+    /* 知识库区域 */
+    .knowledge-section {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    @media (max-width: 1024px) {
+      .knowledge-section {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .knowledge-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition: all 0.3s ease;
+      animation: slide-up 0.6s ease-out 0.1s both;
+    }
+
+    .knowledge-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .knowledge-card:nth-child(2) { animation-delay: 0.15s; }
+    .knowledge-card:nth-child(3) { animation-delay: 0.2s; }
+    .knowledge-card:nth-child(4) { animation-delay: 0.25s; }
+
+    .knowledge-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .knowledge-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .knowledge-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--teal-100) 0%, var(--mint-100) 100%);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .knowledge-meta {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+    }
+
+    .knowledge-body {
+      padding: 20px;
+    }
+
+    /* 资料列表 */
+    .source-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .source-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+
+    .source-item:hover {
+      background: var(--mint-50);
+      border-color: var(--mint-200);
+    }
+
+    .source-bullet {
+      width: 6px;
+      height: 6px;
+      background: var(--teal-500);
+      border-radius: 50%;
+      margin-top: 8px;
+      flex-shrink: 0;
+    }
+
+    .source-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* 食物搜索 */
+    .food-search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .food-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 14px;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+    }
+
+    .food-input:focus {
+      outline: none;
+      border-color: var(--teal-400);
+      background: white;
+      box-shadow: 0 0 0 3px var(--teal-100);
+    }
+
+    .food-input::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    .food-btn {
+      padding: 12px 20px;
+      background: linear-gradient(135deg, var(--teal-600) 0%, var(--mint-600) 100%);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow);
+    }
+
+    .food-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .food-btn:active {
+      transform: translateY(0);
+    }
+
+    .food-result {
+      background: var(--bg-tertiary);
+      border-radius: var(--radius);
+      padding: 16px;
+      min-height: 120px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      white-space: pre-wrap;
+      border: 1px solid var(--border);
+    }
+
+    .food-result:empty::before {
+      content: '输入食物名称（如：鸡蛋、牛奶、大米）查询营养成分...';
+      color: var(--text-tertiary);
+    }
+
+    /* 营养数据展示 */
+    .nutrition-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .nutrition-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px;
+      background: white;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+
+    .nutrition-label {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+
+    .nutrition-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--teal-700);
+    }
+
+    .nutrition-unit {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      font-weight: 400;
+    }
+
+    /* 知识卡片 */
+    .knowledge-cards-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .knowledge-card-item {
+      padding: 16px;
+      background: linear-gradient(135deg, var(--teal-50) 0%, white 100%);
+      border-radius: var(--radius);
+      border: 1px solid var(--teal-100);
+      transition: all 0.2s ease;
+    }
+
+    .knowledge-card-item:hover {
+      border-color: var(--teal-200);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .knowledge-card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--teal-800);
+      margin-bottom: 6px;
+    }
+
+    .knowledge-card-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .knowledge-card-points {
+      margin-top: 10px;
+      padding-left: 16px;
+    }
+
+    .knowledge-card-points li {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    /* 指南列表 */
+    .guide-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .guide-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: white;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+    }
+
+    .guide-item:hover {
+      background: var(--mint-50);
+      border-color: var(--mint-200);
+    }
+
+    .guide-icon {
+      width: 20px;
+      height: 20px;
+      background: var(--teal-100);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+
+    /* 底部 */
+    .footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-tertiary);
+      font-size: 12px;
+    }
+
+    /* 响应式 */
+    @media (max-width: 768px) {
+      .header-inner {
+        padding: 12px 16px;
+        flex-wrap: wrap;
+      }
+
+      .brand-title {
+        font-size: 16px;
+      }
+
+      .main {
+        padding: 16px;
+        gap: 16px;
+      }
+
+      .chat-frame {
+        height: 500px;
+      }
+
+      .knowledge-body {
+        padding: 16px;
+      }
+
+      .nutrition-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .food-search-box {
+        flex-direction: column;
+      }
+
+      .food-btn {
+        width: 100%;
+      }
+    }
+
+    /* 加载动画 */
+    .loading {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-tertiary);
+      font-size: 13px;
+    }
+
+    .loading-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .loading-dots span {
+      width: 6px;
+      height: 6px;
+      background: var(--teal-400);
+      border-radius: 50%;
+      animation: bounce 1.4s ease-in-out infinite both;
+    }
+
+    .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+    .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
+    }
+
+    /* 滚动条美化 */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--slate-300);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--slate-400);
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-icon">🥗</div>
+        <div class="brand-text">
+          <div class="brand-title">AI 智能营养师</div>
+          <div class="brand-subtitle">基于中国食物成分表与权威营养指南</div>
+        </div>
+      </div>
+      <div class="header-status">
+        <span class="badge">本地知识增强</span>
+        <span class="status-text" id="status">等待子页面加载</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- AI 对话区域 -->
+    <section class="chat-section">
+      <div class="chat-header">
+        <div class="chat-title">
+          <span class="chat-title-icon">🤖</span>
+          <span>智能营养顾问</span>
+        </div>
+        <span class="knowledge-meta"> powered by Gemini</span>
+      </div>
+      <div class="chat-frame-wrap">
+        <iframe id="app" class="chat-frame" src="./shim.html" allow="clipboard-read; clipboard-write" referrerpolicy="no-referrer"></iframe>
+      </div>
+    </section>
+
+    <!-- 知识库区域 -->
+    <section class="knowledge-section">
+      <!-- 资料摘要 -->
+      <div class="knowledge-card">
+        <div class="knowledge-header">
+          <div class="knowledge-title">
+            <span class="knowledge-icon">📚</span>
+            <span>资料摘要</span>
+          </div>
+          <span class="knowledge-meta" id="knowledge-meta">
+            <span class="loading">
+              <span class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
+              加载中
+            </span>
+          </span>
+        </div>
+        <div class="knowledge-body">
+          <ul class="source-list" id="knowledge-list">
+            <li class="source-item">
+              <span class="source-bullet"></span>
+              <span class="source-text">正在加载知识库...</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 食物成分查询 -->
+      <div class="knowledge-card">
+        <div class="knowledge-header">
+          <div class="knowledge-title">
+            <span class="knowledge-icon">🔍</span>
+            <span>中国食物成分查询</span>
+          </div>
+          <span class="knowledge-meta">300+ 食物数据</span>
+        </div>
+        <div class="knowledge-body">
+          <div class="food-search-box">
+            <input id="food-query" class="food-input" type="text" placeholder="输入食物名，比如 鸡蛋 / 牛奶 / 大米" />
+            <button id="food-search-btn" class="food-btn" type="button">查询</button>
+          </div>
+          <div class="food-result" id="food-result"></div>
+        </div>
+      </div>
+
+      <!-- 营养知识卡片 -->
+      <div class="knowledge-card">
+        <div class="knowledge-header">
+          <div class="knowledge-title">
+            <span class="knowledge-icon">💡</span>
+            <span>营养知识卡片</span>
+          </div>
+          <span class="knowledge-meta">中国居民膳食指南</span>
+        </div>
+        <div class="knowledge-body">
+          <div class="knowledge-cards-list" id="knowledge-cards">
+            <div class="loading">
+              <span class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
+              加载中
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 重点指南 -->
+      <div class="knowledge-card">
+        <div class="knowledge-header">
+          <div class="knowledge-title">
+            <span class="knowledge-icon">🎯</span>
+            <span>当前接入重点</span>
+          </div>
+          <span class="knowledge-meta">权威来源</span>
+        </div>
+        <div class="knowledge-body">
+          <ul class="guide-list" id="guide-list">
+            <li class="guide-item">
+              <span class="guide-icon">⏳</span>
+              <span>正在加载...</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>本地演示版本 · 在线模型/Firebase 能力已切换至本地演示兜底</p>
+  </footer>
+
+  <script>
+    const frame = document.getElementById('app');
+    const statusEl = document.getElementById('status');
+    const knowledgeMetaEl = document.getElementById('knowledge-meta');
+    const knowledgeListEl = document.getElementById('knowledge-list');
+    const knowledgeCardsEl = document.getElementById('knowledge-cards');
+    const guideListEl = document.getElementById('guide-list');
+    const foodQueryEl = document.getElementById('food-query');
+    const foodSearchBtnEl = document.getElementById('food-search-btn');
+    const foodResultEl = document.getElementById('food-result');
+
+    const allowedChildOrigin = window.location.origin;
+    const blockedHosts = new Set([
+      'www.googletagmanager.com', 'googletagmanager.com',
+      'www.google-analytics.com', 'google-analytics.com',
+      'accounts.google.com', 'ssl.google-analytics.com',
+      'stats.g.doubleclick.net', 'www.googleadservices.com',
+    ]);
+
+    function isFromChild(event) {
+      return event.source === frame.contentWindow && event.origin === allowedChildOrigin;
+    }
+
+    function reply(payload) {
+      if (!frame.contentWindow) return;
+      frame.contentWindow.postMessage(payload, allowedChildOrigin);
+    }
+
+    function renderKnowledgeBase(knowledge) {
+      const sourceCount = Array.isArray(knowledge?.sources) ? knowledge.sources.length : 0;
+      knowledgeMetaEl.textContent = `已接入 ${sourceCount} 份资料`;
+
+      const items = [
+        ...(knowledge?.highlights || []),
+        ...(knowledge?.sources || []).map(item => `${item.title}：${item.status}`),
+      ];
+
+      knowledgeListEl.innerHTML = items.length
+        ? items.map(item => `
+            <li class="source-item">
+              <span class="source-bullet"></span>
+              <span class="source-text">${item}</span>
+            </li>
+          `).join('')
+        : '<li class="source-item"><span class="source-bullet"></span><span class="source-text">暂无资料摘要</span></li>';
+
+      const cards = Array.isArray(knowledge?.knowledgeCards) ? knowledge.knowledgeCards : [];
+      knowledgeCardsEl.innerHTML = cards.length
+        ? cards.map(card => {
+            const points = (card.points || []).map(p => `<li>${p}</li>`).join('');
+            return `
+              <div class="knowledge-card-item">
+                <div class="knowledge-card-title">${card.title}</div>
+                <div class="knowledge-card-desc">${card.summary}</div>
+                ${points ? `<ul class="knowledge-card-points">${points}</ul>` : ''}
+              </div>
+            `;
+          }).join('')
+        : '<div class="knowledge-card-item"><div class="knowledge-card-desc">暂无知识卡片</div></div>';
+
+      const guideItems = [
+        ...(knowledge?.obesityGuide || []),
+        ...(knowledge?.driGuide || []),
+        ...(knowledge?.usDgaGuide || []),
+      ];
+
+      guideListEl.innerHTML = guideItems.length
+        ? guideItems.map(item => `
+            <li class="guide-item">
+              <span class="guide-icon">✓</span>
+              <span>${item}</span>
+            </li>
+          `).join('')
+        : '<li class="guide-item"><span class="guide-icon">-</span><span>暂无重点指南</span></li>';
+    }
+
+    function renderFoodRecord(record) {
+      if (!record) {
+        foodResultEl.innerHTML = '<span style="color: var(--text-tertiary);">没找到匹配食物。试试更短的关键词，比如 牛奶、鸡蛋、大米</span>';
+        return;
+      }
+
+      const nutrients = [
+        { label: '能量', value: record.energy_kcal, unit: 'kcal/100g' },
+        { label: '蛋白质', value: record.protein_g, unit: 'g/100g' },
+        { label: '脂肪', value: record.fat_g, unit: 'g/100g' },
+        { label: '碳水', value: record.carb_g, unit: 'g/100g' },
+        { label: '膳食纤维', value: record.fiber_g, unit: 'g/100g' },
+        { label: '钠', value: record.sodium_mg, unit: 'mg/100g' },
+        { label: '钙', value: record.calcium_mg, unit: 'mg/100g' },
+        { label: '铁', value: record.iron_mg, unit: 'mg/100g' },
+      ].filter(n => n.value);
+
+      foodResultEl.innerHTML = `
+        <div style="margin-bottom: 12px; font-weight: 600; color: var(--text-primary); font-size: 15px;">
+          ${record.name} ${record.region ? `<span style="color: var(--text-tertiary); font-weight: 400;">(${record.region})</span>` : ''}
+        </div>
+        ${record.edible_portion ? `<div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 12px;">可食部分: ${record.edible_portion}</div>` : ''}
+        <div class="nutrition-grid">
+          ${nutrients.map(n => `
+            <div class="nutrition-item">
+              <span class="nutrition-label">${n.label}</span>
+              <span class="nutrition-value">${n.value}<span class="nutrition-unit"> ${n.unit}</span></span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    async function initKnowledge() {
+      try {
+        const [knowledgeRes, foodRes] = await Promise.all([
+          fetch('./knowledge-base.json'),
+          fetch('./food-composition.json'),
+        ]);
+        const knowledge = await knowledgeRes.json();
+        const foods = await foodRes.json();
+        renderKnowledgeBase(knowledge);
+
+        const doSearch = () => {
+          const q = foodQueryEl.value.trim();
+          if (!q) {
+            foodResultEl.innerHTML = '<span style="color: var(--text-tertiary);">先输入食物名再查</span>';
+            return;
+          }
+          const exact = foods.find(item => String(item.name || '').includes(q));
+          renderFoodRecord(exact || null);
+        };
+
+        foodSearchBtnEl.addEventListener('click', doSearch);
+        foodQueryEl.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+      } catch (error) {
+        knowledgeMetaEl.textContent = '加载失败';
+        knowledgeListEl.innerHTML = `<li class="source-item"><span class="source-bullet"></span><span class="source-text" style="color: var(--error)">${error.message}</span></li>`;
+      }
+    }
+
+    initKnowledge();
+
+    function stubTextResponse(status, statusText, body, headers = { 'content-type': 'text/plain; charset=utf-8' }) {
+      return { status, statusText, headers, body };
+    }
+
+    function stubGeminiResponse(url, requestBody) {
+      let promptText = '未识别请求';
+      if (typeof requestBody === 'string') {
+        try {
+          const parsed = JSON.parse(requestBody);
+          promptText = parsed?.contents?.[0]?.parts?.map(p => p?.text).filter(Boolean).join('\n') || promptText;
+        } catch { promptText = requestBody; }
+      }
+
+      let output = ['📘 [本地演示模式]', '', '当前页面已恢复主要交互，但在线 Gemini 接口在公开静态部署里不可用。', '', `请求地址：${url}`, ''];
+
+      if (promptText.includes('制定食谱')) {
+        output = output.concat(['示例食谱：', '早餐：全脂无糖酸奶 + 水煮蛋 + 燕麦 + 蓝莓', '午餐：牛排 / 鸡腿 + 土豆 + 西兰花 + 橄榄油沙拉', '晚餐：三文鱼 + 南瓜 + 菠菜 + 奶酪', '加餐：坚果或高蛋白奶制品', '', '蛋白质目标：按 1.2–1.6g/kg 估算。']);
+      } else if (promptText.includes('专项建议')) {
+        output = output.concat(['示例建议：', '优先真实食物，保证优质蛋白，避免高添加糖和超加工零食。', '如果是特殊人群，重点关注铁、叶酸、B12、胆碱或钙等关键营养素。']);
+      } else if (promptText.includes('分析这张图片中的食物')) {
+        output = output.concat(['示例识别：', '检测到图片分析请求已走通。', '当前结果是离线演示占位，不是真实模型识别。']);
+      } else {
+        output.push('本次请求已被公开演示壳接管。');
+      }
+
+      return { candidates: [{ content: { parts: [{ text: output.join('\n') }] } }] };
+    }
+
+    function isBlockedUrl(url) {
+      try { return blockedHosts.has(new URL(url, window.location.href).hostname); } catch { return false; }
+    }
+
+    function isGeminiRequest(url) {
+      return typeof url === 'string' && url.startsWith('https://generativelanguage.googleapis.com/v1beta/models/');
+    }
+
+    frame.addEventListener('load', () => { statusEl.textContent = '页面已加载'; });
+
+    window.addEventListener('message', async (event) => {
+      if (!isFromChild(event)) return;
+      const data = event.data;
+      if (!data || typeof data !== 'object') return;
+
+      switch (data.type) {
+        case 'interaction': statusEl.textContent = '页面有交互'; break;
+        case 'REQUEST_NEW_FIREBASE_TOKEN':
+          reply({ type: 'RESOLVE_NEW_FIREBASE_TOKEN', success: false, token: null, error: 'Public demo shell has no Firebase token provider.', promiseId: data.promiseId });
+          break;
+        case 'requestMediaPermission':
+          reply({ type: 'resolveMediaPermission', promiseId: data.promiseId, granted: false, error: 'Public demo shell blocks media access.' });
+          break;
+        case 'requestFetch':
+          if (isBlockedUrl(data.url)) {
+            reply({ type: 'resolveFetch', promiseId: data.promiseId, response: stubTextResponse(204, 'Blocked', '') });
+            break;
+          }
+          if (isGeminiRequest(data.url)) {
+            reply({ type: 'resolveFetch', promiseId: data.promiseId, response: { status: 200, statusText: 'OK', headers: { 'content-type': 'application/json' }, body: JSON.stringify(stubGeminiResponse(data.url, data.options?.body)) } });
+            break;
+          }
+          try {
+            const opts = { ...(data.options || {}) };
+            const method = String(opts.method || 'GET').toUpperCase();
+            const res = await fetch(data.url, { method, headers: opts.headers || {}, body: (method !== 'GET' && method !== 'HEAD') ? opts.body : undefined, credentials: opts.credentials || 'same-origin', mode: opts.mode || 'cors' });
+            reply({ type: 'resolveFetch', promiseId: data.promiseId, response: { status: res.status, statusText: res.statusText, headers: Object.fromEntries(res.headers.entries()), body: await res.text() } });
+          } catch (error) {
+            reply({ type: 'resolveFetch', promiseId: data.promiseId, response: stubTextResponse(502, 'Fetch failed', error.message) });
+          }
+          break;
+      }
+    });
+  </script>
+</body>
+</html>

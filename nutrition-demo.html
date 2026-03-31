@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 智能营养师</title>
+  <link rel="icon" href="data:," />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1020;
+      --panel: #11182c;
+      --line: #25304d;
+      --text: #e7ecff;
+      --muted: #93a0c6;
+      --accent: #78a6ff;
+      --warn: #ffb86b;
+      --err: #ff7b72;
+      --ok: #7ee787;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #0b1020 0%, #0d1224 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+    .bar {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(17, 24, 44, 0.92);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+    .title {
+      font-weight: 800;
+      font-size: 16px;
+      letter-spacing: .01em;
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 56vw;
+    }
+    .status-wrap {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .badge {
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--ok);
+      background: rgba(126, 231, 135, 0.08);
+      white-space: nowrap;
+    }
+    .status {
+      font-size: 12px;
+      color: var(--warn);
+      white-space: nowrap;
+    }
+    .frame-wrap {
+      padding: 20px;
+    }
+    .frame-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      background: rgba(17, 24, 44, 0.72);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+      min-height: calc(100vh - 240px);
+    }
+    iframe {
+      width: 100%;
+      height: calc(100vh - 242px);
+      min-height: 640px;
+      border: 0;
+      background: white;
+      display: block;
+    }
+    .knowledge-panel {
+      margin: 0 20px 20px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(17, 24, 44, 0.72);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+      overflow: hidden;
+    }
+    .knowledge-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    .knowledge-title {
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .knowledge-meta {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .knowledge-body {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 16px;
+      padding: 16px 18px 18px;
+    }
+    .knowledge-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: rgba(11, 16, 32, 0.45);
+    }
+    .knowledge-card h3 {
+      margin: 0 0 10px;
+      font-size: 13px;
+    }
+    .knowledge-list {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .food-search {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .food-search input {
+      flex: 1;
+      min-width: 0;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #0a0f1d;
+      color: var(--text);
+      padding: 10px 12px;
+      font: inherit;
+    }
+    .food-search button {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #17213a;
+      color: var(--text);
+      padding: 10px 14px;
+      font: inherit;
+    }
+    .food-result {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      min-height: 96px;
+    }
+    @media (max-width: 900px) {
+      .bar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .status-wrap {
+        margin-left: 0;
+        justify-content: flex-start;
+      }
+      .hint {
+        max-width: 100%;
+        white-space: normal;
+      }
+      .frame-wrap {
+        padding: 12px;
+      }
+      .knowledge-panel {
+        margin: 0 12px 12px;
+      }
+      .knowledge-body {
+        grid-template-columns: 1fr;
+      }
+      iframe {
+        min-height: 560px;
+        height: calc(100vh - 280px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <div class="brand">
+      <div class="title">AI 智能营养师</div>
+      <div class="hint">公开演示版。主体交互已恢复，在线模型/Firebase 能力已切到本地演示兜底。</div>
+    </div>
+    <div class="status-wrap">
+      <div class="badge">可公开静态部署</div>
+      <div class="status" id="status">等待子页面加载</div>
+    </div>
+  </div>
+
+  <div class="frame-wrap">
+    <div class="frame-card">
+      <iframe id="app" src="./shim.html" allow="clipboard-read; clipboard-write" referrerpolicy="no-referrer"></iframe>
+    </div>
+  </div>
+
+  <div class="knowledge-panel">
+    <div class="knowledge-head">
+      <div>
+        <div class="knowledge-title">知识库 / 数据底座</div>
+        <div class="knowledge-meta" id="knowledge-meta">正在加载已投喂资料…</div>
+      </div>
+      <div class="badge">本地知识增强</div>
+    </div>
+    <div class="knowledge-body">
+      <div class="knowledge-card">
+        <h3>资料摘要</h3>
+        <ul class="knowledge-list" id="knowledge-list">
+          <li>正在加载…</li>
+        </ul>
+      </div>
+      <div class="knowledge-card">
+        <h3>中国食物成分查询</h3>
+        <div class="food-search">
+          <input id="food-query" placeholder="输入食物名，比如 鸡蛋 / 牛奶 / 大米" />
+          <button id="food-search-btn" type="button">查询</button>
+        </div>
+        <div class="food-result" id="food-result">可查询已接入的中国食物成分表前 300 条数据。</div>
+      </div>
+    </div>
+    <div class="knowledge-body">
+      <div class="knowledge-card">
+        <h3>中国营养知识卡片</h3>
+        <div class="food-result" id="knowledge-cards">正在加载知识卡片…</div>
+      </div>
+      <div class="knowledge-card">
+        <h3>当前接入重点</h3>
+        <ul class="knowledge-list" id="guide-list">
+          <li>正在加载重点指南…</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="console" id="console"></div>
+
+  <script>
+    const frame = document.getElementById('app');
+    const consoleEl = document.getElementById('console');
+    const statusEl = document.getElementById('status');
+    const knowledgeMetaEl = document.getElementById('knowledge-meta');
+    const knowledgeListEl = document.getElementById('knowledge-list');
+    const knowledgeCardsEl = document.getElementById('knowledge-cards');
+    const guideListEl = document.getElementById('guide-list');
+    const foodQueryEl = document.getElementById('food-query');
+    const foodSearchBtnEl = document.getElementById('food-search-btn');
+    const foodResultEl = document.getElementById('food-result');
+    const allowedChildOrigin = window.location.origin;
+    const blockedHosts = new Set([
+      'www.googletagmanager.com',
+      'googletagmanager.com',
+      'www.google-analytics.com',
+      'google-analytics.com',
+      'accounts.google.com',
+      'ssl.google-analytics.com',
+      'stats.g.doubleclick.net',
+      'www.googleadservices.com',
+    ]);
+
+    function pushLog(message, type = 'log') {
+      const line = document.createElement('div');
+      line.className = `log-line ${type}`;
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      consoleEl.prepend(line);
+    }
+
+    function isFromChild(event) {
+      return event.source === frame.contentWindow && event.origin === allowedChildOrigin;
+    }
+
+    function reply(payload) {
+      if (!frame.contentWindow) return;
+      frame.contentWindow.postMessage(payload, allowedChildOrigin);
+    }
+
+    function renderKnowledgeBase(knowledge) {
+      const sourceCount = Array.isArray(knowledge?.sources) ? knowledge.sources.length : 0;
+      knowledgeMetaEl.textContent = `已接入 ${sourceCount} 份资料，其中食物成分表已结构化。`;
+      const items = [
+        ...(knowledge?.highlights || []),
+        ...((knowledge?.sources || []).map((item) => `${item.title}：${item.status}`)),
+      ];
+      knowledgeListEl.innerHTML = items.map((item) => `<li>${item}</li>`).join('') || '<li>暂无资料摘要</li>';
+
+      const cards = Array.isArray(knowledge?.knowledgeCards) ? knowledge.knowledgeCards : [];
+      knowledgeCardsEl.innerHTML = cards.map((card) => {
+        const points = (card.points || []).map((point) => `• ${point}`).join('\n');
+        return `${card.title}\n${card.summary}${points ? `\n${points}` : ''}`;
+      }).join('\n\n') || '暂无知识卡片';
+
+      const guideItems = [
+        ...(knowledge?.obesityGuide || []),
+        ...(knowledge?.driGuide || []),
+        ...(knowledge?.usDgaGuide || []),
+      ];
+      guideListEl.innerHTML = guideItems.map((item) => `<li>${item}</li>`).join('') || '<li>暂无重点指南</li>';
+    }
+
+    function renderFoodRecord(record) {
+      if (!record) {
+        foodResultEl.textContent = '没找到匹配食物。你可以试试更短的关键词，比如 牛奶、鸡蛋、大米。';
+        return;
+      }
+
+      foodResultEl.textContent = [
+        `食物：${record.name}`,
+        record.region ? `地区：${record.region}` : null,
+        record.edible_portion ? `可食部分：${record.edible_portion}` : null,
+        record.energy_kcal ? `能量：${record.energy_kcal} kcal/100g` : null,
+        record.protein_g ? `蛋白质：${record.protein_g} g/100g` : null,
+        record.fat_g ? `脂肪：${record.fat_g} g/100g` : null,
+        record.carb_g ? `碳水：${record.carb_g} g/100g` : null,
+        record.fiber_g ? `膳食纤维：${record.fiber_g} g/100g` : null,
+        record.sodium_mg ? `钠：${record.sodium_mg} mg/100g` : null,
+        record.calcium_mg ? `钙：${record.calcium_mg} mg/100g` : null,
+        record.iron_mg ? `铁：${record.iron_mg} mg/100g` : null,
+      ].filter(Boolean).join('\n');
+    }
+
+    async function initKnowledge() {
+      try {
+        const [knowledgeRes, foodRes] = await Promise.all([
+          fetch('./knowledge-base.json'),
+          fetch('./food-composition.json'),
+        ]);
+        const knowledge = await knowledgeRes.json();
+        const foods = await foodRes.json();
+        renderKnowledgeBase(knowledge);
+
+        const doSearch = () => {
+          const q = foodQueryEl.value.trim();
+          if (!q) {
+            foodResultEl.textContent = '先输入食物名再查。';
+            return;
+          }
+          const exact = foods.find((item) => String(item.name || '').includes(q));
+          renderFoodRecord(exact || null);
+        };
+
+        foodSearchBtnEl.addEventListener('click', doSearch);
+        foodQueryEl.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') doSearch();
+        });
+      } catch (error) {
+        knowledgeMetaEl.textContent = '知识库加载失败';
+        knowledgeListEl.innerHTML = `<li>${error.message}</li>`;
+      }
+    }
+
+    initKnowledge();
+
+    function stubTextResponse(status, statusText, body, headers = { 'content-type': 'text/plain; charset=utf-8' }) {
+      return { status, statusText, headers, body };
+    }
+
+    function stubGeminiResponse(url, requestBody) {
+      let promptText = '未识别请求';
+
+      if (typeof requestBody === 'string') {
+        try {
+          const parsed = JSON.parse(requestBody);
+          promptText = parsed?.contents?.[0]?.parts?.map((part) => part?.text).filter(Boolean).join('\n') || promptText;
+        } catch {
+          promptText = requestBody;
+        }
+      }
+
+      let output = [
+        '📘 [本地演示模式]',
+        '',
+        '当前页面已恢复主要交互，但在线 Gemini 接口在公开静态部署里不可用，所以这里返回的是本地演示内容。',
+        '',
+        `请求地址：${url}`,
+        '',
+      ];
+
+      if (promptText.includes('制定食谱')) {
+        output = output.concat([
+          '示例食谱：',
+          '早餐：全脂无糖酸奶 + 水煮蛋 + 燕麦 + 蓝莓',
+          '午餐：牛排 / 鸡腿 + 土豆 + 西兰花 + 橄榄油沙拉',
+          '晚餐：三文鱼 + 南瓜 + 菠菜 + 奶酪',
+          '加餐：坚果或高蛋白奶制品',
+          '',
+          '蛋白质目标：按 1.2–1.6g/kg 估算。',
+        ]);
+      } else if (promptText.includes('专项建议')) {
+        output = output.concat([
+          '示例建议：',
+          '优先真实食物，保证优质蛋白，避免高添加糖和超加工零食。',
+          '如果是特殊人群，重点关注铁、叶酸、B12、胆碱或钙等关键营养素。',
+        ]);
+      } else if (promptText.includes('分析这张图片中的食物')) {
+        output = output.concat([
+          '示例识别：',
+          '检测到图片分析请求已走通。',
+          '当前结果是离线演示占位，不是真实模型识别。',
+          '建议上线前接入可用 API，再替换这里的本地兜底。',
+        ]);
+      } else {
+        output.push('本次请求已被公开演示壳接管，但没有命中专用模板。');
+      }
+
+      return {
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  text: output.join('\n'),
+                },
+              ],
+            },
+          },
+        ],
+      };
+    }
+
+    function isBlockedUrl(url) {
+      try {
+        const parsed = new URL(url, window.location.href);
+        return blockedHosts.has(parsed.hostname);
+      } catch {
+        return false;
+      }
+    }
+
+    function isGeminiRequest(url) {
+      return typeof url === 'string' && url.startsWith('https://generativelanguage.googleapis.com/v1beta/models/');
+    }
+
+    frame.addEventListener('load', () => {
+      statusEl.textContent = '页面已加载';
+      pushLog('shim.html loaded', 'ok');
+    });
+
+    window.addEventListener('message', async (event) => {
+      if (!isFromChild(event)) return;
+
+      const data = event.data;
+      if (!data || typeof data !== 'object') return;
+
+      switch (data.type) {
+        case 'interaction': {
+          statusEl.textContent = '页面有交互';
+          break;
+        }
+        case 'log': {
+          pushLog(`child log: ${data.message}`);
+          break;
+        }
+        case 'error': {
+          pushLog(`child error: ${data.message || 'unknown error'}`, 'error');
+          break;
+        }
+        case 'REQUEST_NEW_FIREBASE_TOKEN': {
+          pushLog('child requested Firebase token refresh; returning failure stub');
+          reply({
+            type: 'RESOLVE_NEW_FIREBASE_TOKEN',
+            success: false,
+            token: null,
+            error: 'Public demo shell has no Firebase token provider.',
+            promiseId: data.promiseId,
+          });
+          break;
+        }
+        case 'requestMediaPermission': {
+          pushLog(`child requested media permission: ${JSON.stringify(data.constraints || {})}`);
+          reply({
+            type: 'resolveMediaPermission',
+            promiseId: data.promiseId,
+            granted: false,
+            error: 'Public demo shell blocks media access.',
+          });
+          break;
+        }
+        case 'requestFetch': {
+          pushLog(`intercepted fetch: ${data.url}`);
+
+          if (isBlockedUrl(data.url)) {
+            pushLog(`blocked noisy remote dependency: ${data.url}`);
+            reply({
+              type: 'resolveFetch',
+              promiseId: data.promiseId,
+              response: stubTextResponse(204, 'Blocked by public demo shell', ''),
+            });
+            break;
+          }
+
+          if (isGeminiRequest(data.url)) {
+            pushLog(`stubbed Gemini response locally: ${data.modelName || 'unknown-model'}`, 'ok');
+            reply({
+              type: 'resolveFetch',
+              promiseId: data.promiseId,
+              response: {
+                status: 200,
+                statusText: 'OK',
+                headers: { 'content-type': 'application/json; charset=utf-8' },
+                body: JSON.stringify(stubGeminiResponse(data.url, data.options?.body)),
+              },
+            });
+            break;
+          }
+
+          try {
+            const requestOptions = { ...(data.options || {}) };
+            const method = String(requestOptions.method || 'GET').toUpperCase();
+            const headers = requestOptions.headers || {};
+            let body = requestOptions.body;
+
+            if (body != null && typeof body !== 'string' && !(body instanceof FormData) && !(body instanceof URLSearchParams) && !(body instanceof Blob)) {
+              body = String(body);
+            }
+
+            if (method === 'GET' || method === 'HEAD') {
+              body = undefined;
+            }
+
+            const res = await fetch(data.url, {
+              method,
+              headers,
+              body,
+              credentials: requestOptions.credentials || 'same-origin',
+              mode: requestOptions.mode || 'cors',
+            });
+            const bodyText = await res.text();
+            reply({
+              type: 'resolveFetch',
+              promiseId: data.promiseId,
+              response: {
+                status: res.status,
+                statusText: res.statusText,
+                headers: Object.fromEntries(res.headers.entries()),
+                body: bodyText,
+              },
+            });
+          } catch (error) {
+            pushLog(`fetch failed: ${data.url} -> ${error.message}`, 'error');
+            reply({
+              type: 'resolveFetch',
+              promiseId: data.promiseId,
+              response: stubTextResponse(502, 'Public demo shell fetch failed', error.message || 'fetch failed'),
+            });
+          }
+          break;
+        }
+        case 'SEND_SCREENSHOT':
+        case 'SEND_SCREENSHOT_FOR_DATA_VISUALIZATION': {
+          pushLog(`ignored screenshot bridge event: ${data.type}`);
+          break;
+        }
+        default: {
+          if (typeof data.type === 'string') {
+            pushLog(`unhandled message: ${data.type}`);
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
