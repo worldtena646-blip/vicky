@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>营养成分分析 | Nutrition Analyzer</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Vue 3 CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        background: '#050505',
+                        surface: '#121212',
+                        border: '#2A2A2A',
+                        accent: '#CCFF00', // 高对比度霓虹绿
+                        textMain: '#FFFFFF',
+                        textMuted: '#888888'
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #050505;
+            color: #FFFFFF;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* 极简滚动条 */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
+
+        /* 移除数字输入框的上下箭头 */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] { -moz-appearance: textfield; }
+    </style>
+</head>
+<body class="min-h-screen selection:bg-accent selection:text-black font-sans flex flex-col">
+
+    <div id="app" class="flex-grow flex flex-col p-4 md:p-8 max-w-7xl mx-auto w-full">
+
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row md:items-end justify-between border-b border-border pb-6 mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-bold tracking-tight">MACROS<span class="text-accent">_</span></h1>
+                <p class="text-textMuted mt-1 text-sm uppercase tracking-widest font-mono">Nutritional Content Analyzer</p>
+            </div>
+            <div class="text-sm font-mono text-textMuted bg-surface px-4 py-2 border border-border">
+                每日参考目标: 2000 kcal
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-grow">
+
+            <!-- Left Column: Food Database -->
+            <div class="lg:col-span-5 flex flex-col gap-4 h-full">
+                <div class="sticky top-4">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                        <!-- Search Icon SVG -->
+                        <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="square" stroke-linejoin="miter" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        添加食材
+                    </h2>
+
+                    <!-- Search Input -->
+                    <div class="relative mb-6">
+                        <input
+                            v-model="searchQuery"
+                            type="text"
+                            placeholder="搜索食材 (例如: 苹果, 鸡胸肉)..."
+                            class="w-full bg-surface border-2 border-border text-textMain px-4 py-3 outline-none focus:border-accent transition-colors font-mono text-sm"
+                        >
+                    </div>
+
+                    <!-- Food List -->
+                    <div class="bg-surface border border-border overflow-y-auto" style="max-height: 500px;">
+                        <div v-if="filteredFoods.length === 0" class="p-8 text-center text-textMuted text-sm font-mono">
+                            未找到相关食材...
+                        </div>
+                        <div
+                            v-for="food in filteredFoods"
+                            :key="food.id"
+                            @click="addFoodToPlate(food)"
+                            class="p-4 border-b border-border last:border-b-0 hover:bg-[#1a1a1a] cursor-pointer transition-colors group flex justify-between items-center"
+                        >
+                            <div>
+                                <h3 class="font-medium group-hover:text-accent transition-colors">{{ food.name }}</h3>
+                                <p class="text-xs text-textMuted font-mono mt-1">
+                                    每 100g | {{ food.kcal }} kcal
+                                </p>
+                            </div>
+                            <button class="w-8 h-8 rounded-full border border-border flex items-center justify-center group-hover:border-accent group-hover:text-accent transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="square" stroke-linejoin="miter" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Plate & Analysis -->
+            <div class="lg:col-span-7 flex flex-col gap-8">
+
+                <!-- Macro Summary Panel -->
+                <div class="bg-surface border border-border p-6 md:p-8 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-accent"></div>
+                    <h2 class="text-xl font-semibold mb-6">今日摄入概览</h2>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        <!-- Calories -->
+                        <div class="flex flex-col gap-2">
+                            <span class="text-textMuted text-xs uppercase tracking-wider font-mono">Calories</span>
+                            <div class="text-3xl font-bold">{{ totals.kcal }}</div>
+                            <div class="w-full bg-[#222] h-1.5 mt-2">
+                                <div class="bg-white h-full transition-all duration-500" :style="{ width: getPercentage(totals.kcal, goals.kcal) }"></div>
+                            </div>
+                            <span class="text-[10px] text-textMuted font-mono text-right mt-1">{{ goals.kcal }} kcal</span>
+                        </div>
+                        <!-- Protein -->
+                        <div class="flex flex-col gap-2">
+                            <span class="text-textMuted text-xs uppercase tracking-wider font-mono">Protein</span>
+                            <div class="text-3xl font-bold">{{ totals.protein }}<span class="text-base text-textMuted font-normal">g</span></div>
+                            <div class="w-full bg-[#222] h-1.5 mt-2">
+                                <div class="bg-accent h-full transition-all duration-500" :style="{ width: getPercentage(totals.protein, goals.protein) }"></div>
+                            </div>
+                            <span class="text-[10px] text-textMuted font-mono text-right mt-1">{{ goals.protein }} g</span>
+                        </div>
+                        <!-- Carbs -->
+                        <div class="flex flex-col gap-2">
+                            <span class="text-textMuted text-xs uppercase tracking-wider font-mono">Carbs</span>
+                            <div class="text-3xl font-bold">{{ totals.carbs }}<span class="text-base text-textMuted font-normal">g</span></div>
+                            <div class="w-full bg-[#222] h-1.5 mt-2">
+                                <div class="bg-accent h-full transition-all duration-500" :style="{ width: getPercentage(totals.carbs, goals.carbs) }"></div>
+                            </div>
+                            <span class="text-[10px] text-textMuted font-mono text-right mt-1">{{ goals.carbs }} g</span>
+                        </div>
+                        <!-- Fat -->
+                        <div class="flex flex-col gap-2">
+                            <span class="text-textMuted text-xs uppercase tracking-wider font-mono">Fat</span>
+                            <div class="text-3xl font-bold">{{ totals.fat }}<span class="text-base text-textMuted font-normal">g</span></div>
+                            <div class="w-full bg-[#222] h-1.5 mt-2">
+                                <div class="bg-accent h-full transition-all duration-500" :style="{ width: getPercentage(totals.fat, goals.fat) }"></div>
+                            </div>
+                            <span class="text-[10px] text-textMuted font-mono text-right mt-1">{{ goals.fat }} g</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Plate List -->
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold">餐盘清单</h2>
+                        <button
+                            @click="clearPlate"
+                            v-if="plate.length > 0"
+                            class="text-xs text-textMuted hover:text-white transition-colors underline decoration-border underline-offset-4"
+                        >
+                            清空全部
+                        </button>
+                    </div>
+
+                    <div v-if="plate.length === 0" class="border border-dashed border-border p-12 text-center text-textMuted flex flex-col items-center justify-center gap-4">
+                        <svg class="w-8 h-8 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        <p class="font-mono text-sm">餐盘是空的，请从左侧添加食材</p>
+                    </div>
+
+                    <div v-else class="flex flex-col gap-3">
+                        <div
+                            v-for="(item, index) in plate"
+                            :key="index"
+                            class="bg-surface border border-border p-4 flex flex-col md:flex-row md:items-center gap-4 group"
+                        >
+                            <!-- Food Info -->
+                            <div class="flex-grow">
+                                <h3 class="font-medium text-lg">{{ item.name }}</h3>
+                                <div class="flex gap-4 mt-2 text-xs font-mono text-textMuted">
+                                    <span>P: {{ calculateItemMacro(item.protein, item.amount) }}g</span>
+                                    <span>C: {{ calculateItemMacro(item.carbs, item.amount) }}g</span>
+                                    <span>F: {{ calculateItemMacro(item.fat, item.amount) }}g</span>
+                                </div>
+                            </div>
+
+                            <!-- Controls -->
+                            <div class="flex items-center gap-4 justify-between md:justify-end border-t md:border-t-0 border-border pt-3 md:pt-0">
+                                <div class="flex items-center gap-2">
+                                    <input
+                                        type="number"
+                                        v-model.number="item.amount"
+                                        min="0"
+                                        class="w-20 bg-background border border-border px-2 py-1.5 text-center text-white focus:border-accent outline-none font-mono text-sm"
+                                    >
+                                    <span class="text-textMuted text-sm font-mono">g</span>
+                                </div>
+
+                                <div class="w-20 text-right font-bold text-accent font-mono">
+                                    {{ calculateItemMacro(item.kcal, item.amount) }} <span class="text-xs text-textMuted font-normal">kcal</span>
+                                </div>
+
+                                <button
+                                    @click="removeFood(index)"
+                                    class="text-textMuted hover:text-red-500 transition-colors p-2"
+                                    title="移除"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="square" stroke-linejoin="miter" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- App Logic -->
+    <script>
+        const { createApp, ref, computed } = Vue;
+
+        // 模拟食材数据库 (每100g的营养成分)
+        const foodsDb = [
+            { id: 1, name: '苹果 (Apple)', kcal: 52, protein: 0.3, carbs: 14, fat: 0.2 },
+            { id: 2, name: '鸡胸肉 (Chicken Breast)', kcal: 165, protein: 31, carbs: 0, fat: 3.6 },
+            { id: 3, name: '白米饭 (White Rice)', kcal: 130, protein: 2.7, carbs: 28, fat: 0.3 },
+            { id: 4, name: '西兰花 (Broccoli)', kcal: 34, protein: 2.8, carbs: 6.6, fat: 0.4 },
+            { id: 5, name: '全脂牛奶 (Whole Milk)', kcal: 61, protein: 3.2, carbs: 4.8, fat: 3.3 },
+            { id: 6, name: '燕麦片 (Oats)', kcal: 389, protein: 16.9, carbs: 66.3, fat: 6.9 },
+            { id: 7, name: '鸡蛋 (Egg - 煮)', kcal: 143, protein: 12.6, carbs: 0.7, fat: 9.5 },
+            { id: 8, name: '三文鱼 (Salmon)', kcal: 208, protein: 20, carbs: 0, fat: 13 },
+            { id: 9, name: '牛油果 (Avocado)', kcal: 160, protein: 2, carbs: 8.5, fat: 14.7 },
+            { id: 10, name: '杏仁 (Almonds)', kcal: 579, protein: 21.2, carbs: 21.6, fat: 49.9 },
+            { id: 11, name: '牛肉 (Beef - 瘦)', kcal: 250, protein: 26, carbs: 0, fat: 15 },
+            { id: 12, name: '香蕉 (Banana)', kcal: 89, protein: 1.1, carbs: 22.8, fat: 0.3 },
+        ];
+
+        // 默认摄入目标
+        const defaultGoals = {
+            kcal: 2000,
+            protein: 150,
+            carbs: 200,
+            fat: 65
+        };
+
+        createApp({
+            setup() {
+                const searchQuery = ref('');
+                const plate = ref([]);
+                const goals = ref(defaultGoals);
+
+                // 搜索过滤功能
+                const filteredFoods = computed(() => {
+                    const query = searchQuery.value.toLowerCase().trim();
+                    if (!query) return foodsDb;
+                    return foodsDb.filter(food =>
+                        food.name.toLowerCase().includes(query)
+                    );
+                });
+
+                // 计算特定食材在指定重量下的营养值
+                const calculateItemMacro = (valuePer100g, amount) => {
+                    const val = (valuePer100g * (amount || 0)) / 100;
+                    return Number(val.toFixed(1));
+                };
+
+                // 计算总计
+                const totals = computed(() => {
+                    let totalKcal = 0;
+                    let totalProtein = 0;
+                    let totalCarbs = 0;
+                    let totalFat = 0;
+
+                    plate.value.forEach(item => {
+                        const multiplier = (item.amount || 0) / 100;
+                        totalKcal += item.kcal * multiplier;
+                        totalProtein += item.protein * multiplier;
+                        totalCarbs += item.carbs * multiplier;
+                        totalFat += item.fat * multiplier;
+                    });
+
+                    return {
+                        kcal: totalKcal.toFixed(0),
+                        protein: totalProtein.toFixed(1),
+                        carbs: totalCarbs.toFixed(1),
+                        fat: totalFat.toFixed(1)
+                    };
+                });
+
+                // 计算进度条百分比
+                const getPercentage = (current, goal) => {
+                    let percent = (current / goal) * 100;
+                    if (percent > 100) percent = 100; // 进度条最大100%
+                    return `${percent}%`;
+                };
+
+                // 操作方法
+                const addFoodToPlate = (food) => {
+                    // 深拷贝对象并添加默认重量 100g
+                    plate.value.push({ ...food, amount: 100 });
+                };
+
+                const removeFood = (index) => {
+                    plate.value.splice(index, 1);
+                };
+
+                const clearPlate = () => {
+                    plate.value = [];
+                };
+
+                return {
+                    searchQuery,
+                    filteredFoods,
+                    plate,
+                    goals,
+                    totals,
+                    calculateItemMacro,
+                    getPercentage,
+                    addFoodToPlate,
+                    removeFood,
+                    clearPlate
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
